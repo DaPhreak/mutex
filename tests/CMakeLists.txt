@@ -1,6 +1,6 @@
 cmake_minimum_required( VERSION 3.28 FATAL_ERROR )
 
-project( recursive_shared_mutex_tests
+project( mutex_tests
 	VERSION 0.1.0
 	DESCRIPTION ""
 	LANGUAGES CXX
@@ -21,7 +21,7 @@ FetchContent_Declare( Catch2
 FetchContent_MakeAvailable( Catch2 )
 
 add_executable( ${PROJECT_NAME}
-    src/test_recursive_shared_mutex.cpp
+    src/test_mutex.cpp
 )
 
 target_include_directories( ${PROJECT_NAME} PRIVATE
@@ -30,7 +30,7 @@ target_include_directories( ${PROJECT_NAME} PRIVATE
 
 target_link_libraries( ${PROJECT_NAME} PRIVATE
     Catch2::Catch2WithMain
-    recursive_shared_mutex
+    mutex
 )
 
 list( APPEND CMAKE_MODULE_PATH ${catch2_SOURCE_DIR}/extras )

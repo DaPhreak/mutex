@@ -1,13 +1,13 @@
 cmake_minimum_required( VERSION 3.28 FATAL_ERROR )
 
-project( recursive_shared_mutex
+project( mutex
 	VERSION 0.1.0
 	DESCRIPTION ""
 	LANGUAGES CXX
 )
 
 set( HEADERS
-	include/recursive_shared_mutex/recursive_shared_mutex.h
+	include/mutex/recursive_shared_mutex.h
 )
 
 set( SOURCES
