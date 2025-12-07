@@ -1,2 +1,2 @@
-# recursive_shared_mutex
+# mutex
 recursive shared mutex
