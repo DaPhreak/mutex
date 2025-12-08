@@ -17,17 +17,16 @@ public:
     [[nodiscard]] bool try_lock_shared( std::shared_mutex& mutex ) noexcept;
 
 private:
-    using Counter = std::make_signed_t<size_t>;
-    using Entry   = std::pair<const void*,Counter>;
-    using List    = std::vector<Entry>;
-    using Iter    = List::iterator;
+    using Entry = std::pair<const void*,std::make_signed_t<size_t>>;
+    using List  = std::vector<Entry>;
+    using Iter  = List::iterator;
 
     recursive_shared_mutex_impl() = default;
     ~recursive_shared_mutex_impl() noexcept;
     recursive_shared_mutex_impl(const recursive_shared_mutex_impl&)            = delete;
     recursive_shared_mutex_impl& operator=(const recursive_shared_mutex_impl&) = delete;
 
-    Iter make( const std::shared_mutex& mutex );
+    Iter entry( const std::shared_mutex& mutex );
 
     List mList;
 };
@@ -41,7 +40,7 @@ recursive_shared_mutex_impl& recursive_shared_mutex_impl::Instance()
 
 void recursive_shared_mutex_impl::lock( std::shared_mutex& mutex ) noexcept
 {
-    auto it{ make( mutex ) };
+    auto it{ entry( mutex ) };
 
     if ( it->second < 0 ) {
         --it->second;
@@ -56,7 +55,7 @@ void recursive_shared_mutex_impl::lock( std::shared_mutex& mutex ) noexcept
 
 bool recursive_shared_mutex_impl::try_lock( std::shared_mutex& mutex ) noexcept
 {
-    auto it{ make( mutex ) };
+    auto it{ entry( mutex ) };
 
     if ( it->second < 0 ) {
         --it->second;
@@ -73,9 +72,8 @@ bool recursive_shared_mutex_impl::try_lock( std::shared_mutex& mutex ) noexcept
 
 void recursive_shared_mutex_impl::unlock( std::shared_mutex& mutex ) noexcept
 {
-    auto it{ make( mutex ) };
+    auto it{ entry( mutex ) };
 
-    assert( it->second != 0 );
     if ( it->second > 0 ) {
         if ( --it->second == 0 ) {
             mutex.unlock_shared();
@@ -93,21 +91,18 @@ void recursive_shared_mutex_impl::unlock( std::shared_mutex& mutex ) noexcept
 
 void recursive_shared_mutex_impl::lock_shared( std::shared_mutex& mutex ) noexcept
 {
-    auto it{ make( mutex ) };
+    auto it{ entry( mutex ) };
 
     if ( it->second < 0 ) {
         --it->second;
-    } else {
-        if ( it->second == 0 ) {
-            mutex.lock_shared();
-        }
-        ++it->second;
+    } else if ( ++it->second == 1 ) {
+        mutex.lock_shared();
     }
 }
 
 bool recursive_shared_mutex_impl::try_lock_shared( std::shared_mutex& mutex ) noexcept
 {
-    auto it{ make( mutex ) };
+    auto it{ entry( mutex ) };
 
     if ( it->second < 0 ) {
         --it->second;
@@ -120,7 +115,7 @@ bool recursive_shared_mutex_impl::try_lock_shared( std::shared_mutex& mutex ) no
     return true;
 }
 
-recursive_shared_mutex_impl::Iter recursive_shared_mutex_impl::make( const std::shared_mutex& mutex )
+recursive_shared_mutex_impl::Iter recursive_shared_mutex_impl::entry( const std::shared_mutex& mutex )
 {
     if ( auto rit{
         std::find_if( mList.rbegin(), mList.rend(),
