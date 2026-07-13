@@ -1,6 +1,8 @@
 #include "phreak_mutex/recursive_shared_mutex.h"
 
 #include <assert.h>
+#include <algorithm>
+#include <exception>
 #include <vector>
 
 namespace {
@@ -42,9 +44,7 @@ recursive_shared_mutex_impl& recursive_shared_mutex_impl::Instance()
 
 void recursive_shared_mutex_impl::lock( std::shared_mutex& mutex ) noexcept
 {
-    auto& entry{ make( mutex ) };
-
-    if ( entry.second < 0 ) {
+    if ( auto& entry{ make( mutex ) }; entry.second < 0 ) {
         --entry.second;
     } else {
         if ( entry.second > 0 ) {
@@ -57,9 +57,7 @@ void recursive_shared_mutex_impl::lock( std::shared_mutex& mutex ) noexcept
 
 bool recursive_shared_mutex_impl::try_lock( std::shared_mutex& mutex ) noexcept
 {
-    auto it{ find( mutex ) };
-
-    if ( it == mList.end() ) {
+    if ( auto it{ find( mutex ) }; it == mList.end() ) {
         if ( mutex.try_lock() ) {
             mList.emplace_back( &mutex, -1 );
             return true;
@@ -73,9 +71,7 @@ bool recursive_shared_mutex_impl::try_lock( std::shared_mutex& mutex ) noexcept
 
 void recursive_shared_mutex_impl::unlock( std::shared_mutex& mutex ) noexcept
 {
-    auto it{ find( mutex ) };
-
-    if ( it == mList.end() ) {
+    if ( auto it{ find( mutex ) }; it == mList.end() ) {
         std::terminate();
     } else if ( it->second > 0 ) {
         if ( --it->second == 0 ) {
@@ -90,9 +86,7 @@ void recursive_shared_mutex_impl::unlock( std::shared_mutex& mutex ) noexcept
 
 void recursive_shared_mutex_impl::lock_shared( std::shared_mutex& mutex ) noexcept
 {
-    auto& entry{ make( mutex ) };
-
-    if ( entry.second < 0 ) {
+    if ( auto& entry{ make( mutex ) }; entry.second < 0 ) {
         --entry.second;
     } else if ( ++entry.second == 1 ) {
         mutex.lock_shared();
@@ -101,9 +95,7 @@ void recursive_shared_mutex_impl::lock_shared( std::shared_mutex& mutex ) noexce
 
 bool recursive_shared_mutex_impl::try_lock_shared( std::shared_mutex& mutex ) noexcept
 {
-    auto it{ find( mutex ) };
-
-    if ( it == mList.end() ) {
+    if ( auto it{ find( mutex ) }; it == mList.end() ) {
         if ( !mutex.try_lock_shared() ) {
             return false;
         }
