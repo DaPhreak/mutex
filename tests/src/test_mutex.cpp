@@ -18,7 +18,7 @@ TEST_CASE("Lock one thread", "[recursive_shared_mutex]")
 
             REQUIRE ( mutex.try_lock() );
             REQUIRE ( mutex.try_lock_shared() );
-            mutex.unlock();
+            mutex.unlock_shared();
             mutex.unlock();
         }
     }
